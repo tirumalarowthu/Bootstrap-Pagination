@@ -1,20 +1,47 @@
 import React, { useState, useMemo } from 'react';
 import Pagination from '../Pagination';
-import data from './data/mock-data.json';//the data should be loaded here it self
+import data from './data/mock-data.json';
+import { Form, Button } from 'react-bootstrap';
  
-let PageSize = 20; //No of users per page
+let pageSize = 10;
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchValue, setSearchValue] = useState('');
 
+  const filteredData = useMemo(() => {
+    return data.filter(item => {
+      return (
+        item.first_name.toLowerCase().includes(searchValue.toLowerCase()) ||
+        item.last_name.toLowerCase().includes(searchValue.toLowerCase()) ||
+        item.email.toLowerCase().includes(searchValue.toLowerCase()) ||
+        item.phone.toLowerCase().includes(searchValue.toLowerCase())
+      );
+    });
+  }, [searchValue]);
   const currentTableData = useMemo(() => {
-    const firstPageIndex = (currentPage - 1) * PageSize;
-    const lastPageIndex = firstPageIndex + PageSize;
-    return data.slice(firstPageIndex, lastPageIndex);
-  }, [currentPage]);
+    const firstPageIndex = (currentPage - 1) * pageSize;
+    const lastPageIndex = firstPageIndex + pageSize;
+    return filteredData.slice(firstPageIndex, lastPageIndex);
+  }, [currentPage, filteredData]);
+
+  const handleSearchInputChange = e => {
+    setSearchValue(e.target.value);
+    setCurrentPage(1);
+  };
 
   return (
     <div className='container'>
+      <div className='d-flex float-end my-3'>
+        <div className=''>
+          <Form.Control type='text' placeholder='Search' value={searchValue} onChange={handleSearchInputChange} />
+        </div>
+        <div className=''>
+          <Button variant='primary' onClick={() => setSearchValue('')}>
+            Clear
+          </Button>
+        </div>
+      </div>
       <table className='table table-hover'>
         <thead>
           <tr>
@@ -26,10 +53,10 @@ export default function App() {
           </tr>
         </thead>
         <tbody>
-          {currentTableData.map((item,index) => {
+          {currentTableData.map((item, index) => {
             return (
-              <tr>
-                <td>{((currentPage-1)*PageSize)+index+1}</td>
+              <tr key={index}>
+                <td>{(currentPage - 1) * pageSize + index + 1}</td>
                 <td>{item.first_name}</td>
                 <td>{item.last_name}</td>
                 <td>{item.email}</td>
@@ -39,11 +66,11 @@ export default function App() {
           })}
         </tbody>
       </table>
-      <Pagination   
-        className="pagination-bar"
+      <Pagination
+        className='pagination-bar'
         currentPage={currentPage}
-        totalCount={data.length}
-        pageSize={PageSize}
+        totalCount={filteredData.length}
+        pageSize={pageSize}
         onPageChange={page => setCurrentPage(page)}
       />
     </div>
